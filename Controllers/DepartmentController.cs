@@ -1,13 +1,15 @@
 ﻿using EmployeeAdminProtal.Data;
 using EmployeeAdminProtal.Models;
 using EmployeeAdminProtal.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace EmployeeAdminProtal.Controllers
 {
     //localhost:xxxx/api/Department
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class DepartmentController : ControllerBase
     {
@@ -20,7 +22,14 @@ namespace EmployeeAdminProtal.Controllers
         [HttpGet]
         public IActionResult GetAllDepartments()
         {
-            return Ok(dbContext.Departments.ToList());
+            List<DepartmentDTO> result = dbContext.Departments.Select(x=> new DepartmentDTO()
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Prefix = x.Prefix,
+                Description = x.Description
+            }).ToList();
+            return Ok();
         }
 
         [HttpGet]
@@ -32,40 +41,70 @@ namespace EmployeeAdminProtal.Controllers
             {
                 return NotFound();
             }
-            return Ok(department);
+            DepartmentViewModel departmentViewModel = new DepartmentViewModel()
+            {
+                Id = department.Id,
+                Name = department.Name,
+                Prefix = department.Prefix,
+                DepartmentManagerId = department.DepartmentManagerId,
+                Description = department.Description,
+                CreateOrUpdatedBy = department.CreatedBy,
+                CreateOrUpdatedOn = department.CreatedOn
+            };
+            return Ok(departmentViewModel);
         }
 
         [HttpPost]
-        public IActionResult AddDepartment(AddDepartmentDTO addDepartmentDTo)
+
+        public IActionResult CreateDepartment([FromBody]DepartmentViewModel departmentViewModel)
         {
-            var newDepartment = new Department()
+            if(ModelState.IsValid)
             {
-                Name = addDepartmentDTo.Name,
-                Prefix = addDepartmentDTo.Prefix,
-                Description = addDepartmentDTo.Description,
-                CreatedOn = DateTime.UtcNow
-            };
-            dbContext.Departments.Add(newDepartment);
-            dbContext.SaveChanges();
-            return Ok(newDepartment);
-        }
-        [HttpPut]
-        [Route("{id:long}")]
-        public IActionResult UpdateDepartment(long id, UpdateDepartmentDTO updateDepartmentDTO)
-        {
-            var department = dbContext.Departments.Find(id);
-            if (department == null)
-            {
-                return NotFound();
+                Department department = new Department()
+                {
+                    Name = departmentViewModel.Name,
+                    Prefix = departmentViewModel.Prefix,
+                    DepartmentManagerId = departmentViewModel.DepartmentManagerId,
+                    Description = departmentViewModel.Description,
+                    CreatedBy = departmentViewModel.CreateOrUpdatedBy,
+                    CreatedOn = DateTime.UtcNow
+                };
+                dbContext.Departments.Add(department);
+                dbContext.SaveChanges();
+                return Ok(departmentViewModel);
             }
-            department.Name = updateDepartmentDTO.Name;
-            department.Prefix = updateDepartmentDTO.Prefix;
-            department.Description = updateDepartmentDTO.Description;
-            department.UpdatedOn = DateTime.UtcNow;
-            dbContext.SaveChanges();
-            return Ok(department);
+            else
+            {
+                return BadRequest(ModelState);
+            }
         }
 
+        [HttpPut]
+        [Route("{id:long}")]
+        
+        public IActionResult UpdateDepartment(long id, DepartmentViewModel departmentViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var department = dbContext.Departments.Find(id);
+                if (department == null)
+                {
+                    return NotFound();
+                }
+                department.Name = departmentViewModel.Name;
+                department.Prefix = departmentViewModel.Prefix;
+                department.DepartmentManagerId = departmentViewModel.DepartmentManagerId;
+                department.Description = departmentViewModel.Description;
+                department.UpdatedBy = departmentViewModel.CreateOrUpdatedBy;
+                department.UpdatedOn = DateTime.UtcNow;
+                dbContext.SaveChanges();
+                return Ok(departmentViewModel);
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
+        }
 
         [HttpDelete]
         [Route("{id:long}")]

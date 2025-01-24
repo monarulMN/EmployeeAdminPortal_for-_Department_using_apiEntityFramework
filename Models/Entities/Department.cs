@@ -1,13 +1,18 @@
-﻿namespace EmployeeAdminProtal.Models.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace EmployeeAdminProtal.Models.Entities
 {
     public class Department
     {
         public long Id { get; set; }
         public long QissLocationId { get; set; }
         public long DepartmentManagerId { get; set; }
-        public required string Name { get; set; }
-        public required string Prefix { get; set; }
-        public required string Description { get; set; }
+        [Required]
+        public string Name { get; set; }
+        [Required]
+        public string Prefix { get; set; }
+        [Required]
+        public string Description { get; set; }
 
         public long CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
